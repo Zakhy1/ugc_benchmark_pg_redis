@@ -1,9 +1,11 @@
 """
 Абстрактный интерфейс для генерации тестовых данных.
 """
+
 from abc import ABC, abstractmethod
-from .database import AbstractDatabaseRepository
+
 from .config import AbstractBenchmarkConfig
+from .database import AbstractDatabaseRepository
 
 
 class AbstractDataGenerator(ABC):
@@ -12,7 +14,9 @@ class AbstractDataGenerator(ABC):
     Использует репозиторий БД для вставки данных.
     """
 
-    def __init__(self, config: AbstractBenchmarkConfig, db_repo: AbstractDatabaseRepository):
+    def __init__(
+        self, config: AbstractBenchmarkConfig, db_repo: AbstractDatabaseRepository
+    ):
         self.config = config
         self.db_repo = db_repo
 

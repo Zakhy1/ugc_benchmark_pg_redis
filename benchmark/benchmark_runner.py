@@ -2,18 +2,20 @@
 Абстрактный класс для запуска бенчмарка.
 Определяет общий процесс инициализации, прогрева, выполнения тестов и завершения.
 """
+
 import logging
 from abc import ABC, abstractmethod
-from .config import AbstractBenchmarkConfig
-from .database import AbstractDatabaseConnection, AbstractDatabaseRepository
-from .cache import AbstractCacheConnection, AbstractCacheRepository
-from .data_generator import AbstractDataGenerator
+
 from .benchmark_cases import (
-    benchmark_user_likes_list,
     benchmark_movie_stats,
+    benchmark_realtime_like_add_and_read,
     benchmark_user_bookmarks_list,
-    benchmark_realtime_like_add_and_read
+    benchmark_user_likes_list,
 )
+from .cache import AbstractCacheConnection, AbstractCacheRepository
+from .config import AbstractBenchmarkConfig
+from .data_generator import AbstractDataGenerator
+from .database import AbstractDatabaseConnection, AbstractDatabaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -102,12 +104,16 @@ class AbstractBenchmarkRunner(ABC):
         if self.config.run_static_read_tests:
             logger.info("--- Статические тесты чтения ---")
             await benchmark_user_likes_list(self.db_repo, self.cache_repo, test_user_id)
-            await benchmark_user_bookmarks_list(self.db_repo, self.cache_repo, test_user_id)
+            await benchmark_user_bookmarks_list(
+                self.db_repo, self.cache_repo, test_user_id
+            )
             await benchmark_movie_stats(self.db_repo, self.cache_repo, test_movie_id)
 
         if self.config.run_realtime_tests:
             logger.info("--- Тесты реального времени ---")
-            await benchmark_realtime_like_add_and_read(self.db_repo, self.cache_repo, test_user_id, test_movie_id)
+            await benchmark_realtime_like_add_and_read(
+                self.db_repo, self.cache_repo, test_user_id, test_movie_id
+            )
 
         logger.info("=== ТЕСТЫ ЗАВЕРШЕНЫ ===")
 
