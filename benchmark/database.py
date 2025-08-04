@@ -86,7 +86,7 @@ class AbstractDatabaseRepository(ABC):
 
     @abstractmethod
     async def remove_review_like(
-        self, user_id: uuid.UUID, review_id: uuid.UUID
+            self, user_id: uuid.UUID, review_id: uuid.UUID
     ) -> bool:
         pass
 
@@ -146,3 +146,69 @@ class PostgresConnection(AbstractDatabaseConnection):
     async def close(self):
         if self.conn is not None:
             self.conn.close()
+
+
+class PostgresRepository(AbstractDatabaseRepository):
+    async def create_user(self, user: User) -> User:
+        pass
+
+    async def get_random_user_id(self) -> uuid.UUID | None:
+        pass
+
+    # --- Movies ---
+    async def create_movie(self, movie: Movie) -> Movie:
+        pass
+
+    async def get_random_movie_id(self) -> uuid.UUID | None:
+        pass
+
+    # --- Likes ---
+    async def add_or_update_like(self, like: Like) -> Like:
+        pass
+
+    async def remove_like(self, user_id: uuid.UUID, movie_id: uuid.UUID) -> bool:
+        pass
+
+    async def get_movie_stats(self, movie_id: uuid.UUID) -> MovieStats:
+        pass
+
+    # --- Reviews ---
+    async def create_review(self, review: Review) -> Review:
+        pass
+
+    async def add_or_update_review_like(self, review_like: ReviewLike) -> ReviewLike:
+        pass
+
+    async def remove_review_like(
+            self, user_id: uuid.UUID, review_id: uuid.UUID
+    ) -> bool:
+        pass
+
+    async def get_review_stats(self, review_id: uuid.UUID) -> ReviewStats:
+        pass
+
+    # --- Bookmarks ---
+    async def add_bookmark(self, bookmark: Bookmark) -> bool:
+        pass  # True if added
+
+    async def remove_bookmark(self, user_id: uuid.UUID, movie_id: uuid.UUID) -> bool:
+        pass
+
+    # --- Data Generation Helpers ---
+    async def bulk_insert_users(self, users: List[User]):
+        pass
+
+    async def bulk_insert_movies(self, movies: List[Movie]):
+        pass
+
+    async def bulk_insert_likes(self, likes: List[Like]):
+        pass
+
+    async def bulk_insert_bookmarks(self, bookmarks: List[Bookmark]):
+        pass
+
+    async def bulk_insert_reviews(self, reviews: List[Review]):
+        pass
+
+    async def bulk_insert_review_likes(self, review_likes: List[ReviewLike]):
+        pass
