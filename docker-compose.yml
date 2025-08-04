@@ -1,4 +1,15 @@
 services:
+  benchmark:
+    build: ./benchmark
+    command: python main.py
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   postgres:
     image: postgres:17
     volumes:
@@ -14,6 +25,18 @@ services:
       retries: 3
       start_period: 10s
     restart: always
+
+  redis:
+    container_name: redis
+    image: redis
+    restart: always
+    expose:
+      - "6379"
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5
 
 volumes:
   postgres_data:
