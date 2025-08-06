@@ -4,8 +4,8 @@
 
 from abc import ABC, abstractmethod
 
-from .config import AbstractBenchmarkConfig
-from .database import AbstractDatabaseRepository
+from config import AbstractBenchmarkConfig
+from database import AbstractDatabaseRepository
 
 
 class AbstractDataGenerator(ABC):

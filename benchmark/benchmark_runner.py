@@ -3,21 +3,21 @@
 Определяет общий процесс инициализации, прогрева, выполнения тестов и завершения.
 """
 
-import logging
 from abc import ABC, abstractmethod
 
-from .benchmark_cases import (
+from benchmark_cases import (
     benchmark_movie_stats,
     benchmark_realtime_like_add_and_read,
     benchmark_user_bookmarks_list,
     benchmark_user_likes_list,
 )
-from .cache import AbstractCacheConnection, AbstractCacheRepository
-from .config import AbstractBenchmarkConfig
-from .data_generator import AbstractDataGenerator
-from .database import AbstractDatabaseConnection, AbstractDatabaseRepository
+from cache import AbstractCacheConnection, AbstractCacheRepository
+from config import AbstractBenchmarkConfig
+from data_generator import AbstractDataGenerator
+from database import AbstractDatabaseRepository, AbstractDatabaseConnection
+from logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 
 class AbstractBenchmarkRunner(ABC):

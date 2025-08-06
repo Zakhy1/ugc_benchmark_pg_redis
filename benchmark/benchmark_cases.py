@@ -3,16 +3,16 @@
 Эти функции принимают абстрактные репозитории и выполняют тесты.
 """
 
-import asyncio
-import logging
+import datetime
 import time
 import uuid
 from typing import Tuple
 
-from .cache import AbstractCacheRepository
-from .database import AbstractDatabaseRepository
+from cache import AbstractCacheRepository
+from database import AbstractDatabaseRepository
+from logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 
 async def benchmark_user_likes_list(
@@ -25,23 +25,15 @@ async def benchmark_user_likes_list(
     """
     # --- Из БД ---
     start_time = time.perf_counter()
-    # Логика получения лайков из БД зависит от реализации.
-    # Здесь просто вызываем метод репозитория.
-    # Предположим, что репозиторий имеет метод `get_user_likes_from_db`
-    # который возвращает список `Like` или агрегированные данные.
-    # Для примера, пусть он просто делает SELECT.
-    # Реальная реализация будет в конкретном репозитории.
-    # db_likes = await db_repo.get_user_likes_from_db(user_id)
-    # Имитируем работу
-    await asyncio.sleep(0)  # Заглушка
+
+    db_likes = await db_repo.get_user_likes_from_db(user_id)
     db_time = time.perf_counter() - start_time
 
     # --- Из кэша ---
     cache_time = None
     if cache_repo:
         start_time = time.perf_counter()
-        # cached_likes = await cache_repo.get_user_likes(user_id)
-        await asyncio.sleep(0)  # Заглушка
+        cached_likes = await cache_repo.get_user_likes(user_id)
         cache_time = time.perf_counter() - start_time
 
     logger.info(f"[Бенчмарк] Список лайков пользователя (БД): {db_time*1000:.2f} мс")
@@ -61,16 +53,15 @@ async def benchmark_movie_stats(
     """
     Тесты 2, 3: Получение количества лайков/дизлайков и средней оценки фильма.
     """
+
     start_time = time.perf_counter()
-    # stats = await db_repo.get_movie_stats(movie_id)
-    await asyncio.sleep(0)
+    stats = await db_repo.get_movie_stats(movie_id)
     db_time = time.perf_counter() - start_time
 
     cache_time = None
     if cache_repo:
         start_time = time.perf_counter()
-        # cached_stats = await cache_repo.get_movie_stats(movie_id)
-        await asyncio.sleep(0)
+        cached_stats = await cache_repo.get_movie_stats(movie_id)
         cache_time = time.perf_counter() - start_time
 
     logger.info(f"[Бенчмарк] Статистика фильма (БД): {db_time*1000:.2f} мс")
@@ -87,16 +78,15 @@ async def benchmark_user_bookmarks_list(
     """
     Тест 4: Получение списка закладок пользователя.
     """
+
     start_time = time.perf_counter()
-    # bookmarks = await db_repo.get_user_bookmarks_from_db(user_id)
-    await asyncio.sleep(0)
+    bookmarks = await db_repo.get_user_bookmarks_from_db(user_id)
     db_time = time.perf_counter() - start_time
 
     cache_time = None
     if cache_repo:
         start_time = time.perf_counter()
-        # cached_bookmarks = await cache_repo.get_user_bookmarks(user_id)
-        await asyncio.sleep(0)
+        cached_bookmarks = await cache_repo.get_user_bookmarks(user_id)
         cache_time = time.perf_counter() - start_time
 
     logger.info(f"[Бенчмарк] Список закладок пользователя (БД): {db_time*1000:.2f} мс")
@@ -127,47 +117,42 @@ async def benchmark_realtime_like_add_and_read(
             "user_id": user_id,
             "movie_id": movie_id,
             "rating": new_rating,
-            "timestamp": None,  # Будет установлен в репозитории
+            "timestamp": datetime.datetime.now(),  # Будет установлен в репозитории
         },
     )()
-    logger.info(like_data)
 
     # --- Запись в БД ---
     start_time_write = time.perf_counter()
-    # await db_repo.add_or_update_like(like_data)
-    await asyncio.sleep(0)
+    await db_repo.add_or_update_like(like_data)
     write_time = time.perf_counter() - start_time_write
 
     # --- Обновление кэша ---
     cache_update_time = None
     if cache_repo:
         start_time_cache = time.perf_counter()
-        # await cache_repo.update_user_like(user_id, str(movie_id), new_rating)
-        # await cache_repo.invalidate_movie_stats(movie_id)
-        await asyncio.sleep(0)
+        await cache_repo.update_user_like(user_id, str(movie_id), new_rating)
+        await cache_repo.invalidate_movie_stats(movie_id)
         cache_update_time = time.perf_counter() - start_time_cache
 
     # --- Чтение из БД ---
     start_time_read_db = time.perf_counter()
-    # await db_repo.get_movie_stats(movie_id)
-    await asyncio.sleep(0)
+    await db_repo.get_movie_stats(movie_id)
     read_db_time = time.perf_counter() - start_time_read_db
 
     # --- Чтение из кэша ---
     read_cache_time = None
     if cache_repo:
         start_time_read_cache = time.perf_counter()
-        # await cache_repo.get_movie_stats(movie_id) # Может быть мисс
-        await asyncio.sleep(0)
+        await cache_repo.get_movie_stats(movie_id)
         read_cache_time = time.perf_counter() - start_time_read_cache
 
-    logger.info(f"[Бенчмарк] Добавление лайка (БД): {write_time*1000:.2f} мс")
+    logger.info(f"[Бенчмарк] Добавление лайка (БД): {write_time*1000:.2f} с")
     if cache_update_time is not None:
-        logger.info(f"[Бенчмарк] Обновление кэша: {cache_update_time*1000:.2f} мс")
-    logger.info(f"[Бенчмарк] Чтение после добавления (БД): {read_db_time*1000:.2f} мс")
+        logger.info(f"[Бенчмарк] Обновление кэша: {cache_update_time*1000:.2f} с")
+    logger.info(f"[Бенчмарк] Чтение после добавления (БД): {read_db_time*1000:.2f} с")
     if read_cache_time is not None:
         logger.info(
-            f"[Бенчмарк] Чтение после добавления (Кэш): {read_cache_time*1000:.2f} мс"
+            f"[Бенчмарк] Чтение после добавления (Кэш): {read_cache_time*1000:.2f} с"
         )
 
     return write_time, cache_update_time, read_db_time, read_cache_time
@@ -205,26 +190,24 @@ async def benchmark_review_like_add_and_read(
 
     # --- Обновление кэша (если используется) ---
     cache_update_time = None
-    # if cache_repo:
-    #     start_time_cache = time.perf_counter()
-    #     # await cache_repo.update_review_like(user_id, str(review_id), new_rating)
-    #     # await cache_repo.invalidate_review_stats(review_id)
-    #     await asyncio.sleep(0) # Заглушка
-    #     cache_update_time = time.perf_counter() - start_time_cache
+    if cache_repo:
+        start_time_cache = time.perf_counter()
+        # Если реализовано в кэше:
+        # await cache_repo.update_review_like(user_id, str(review_id), new_rating)
+        # await cache_repo.invalidate_review_stats(review_id)
+        cache_update_time = time.perf_counter() - start_time_cache
 
     # --- Чтение статистики рецензии из БД ---
     start_time_read_db = time.perf_counter()
-    # await db_repo.get_review_stats(review_id)
-    await asyncio.sleep(0)  # Заглушка
+    await db_repo.get_review_stats(review_id)
     read_db_time = time.perf_counter() - start_time_read_db
 
     # --- Чтение статистики рецензии из кэша ---
     read_cache_time = None
-    # if cache_repo:
-    #     start_time_read_cache = time.perf_counter()
-    #     # await cache_repo.get_review_stats(review_id)
-    #     await asyncio.sleep(0) # Заглушка
-    #     read_cache_time = time.perf_counter() - start_time_read_cache
+    if cache_repo:
+        start_time_read_cache = time.perf_counter()
+        # await cache_repo.get_review_stats(review_id)
+        read_cache_time = time.perf_counter() - start_time_read_cache
 
     logger.info(
         f"[Бенчмарк] Добавление лайка к рецензии (БД): {write_time*1000:.2f} мс"
